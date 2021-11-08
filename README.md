@@ -1,6 +1,6 @@
 # bkl - Run Buildkite Pipelines locally
 
-Run buildkite pipelines locally for fast testing or if buildkite.com is down.
+Run buildkite pipelines locally (no buildkite.com required).
 
 ## Installing
 
@@ -30,6 +30,20 @@ hello world!
 >>> Command succeeded in 3.047168424s
 >>> Build finished in 3.051489877s
 ```
+
+## What is working
+
+* [x] Pipeline uploads (converting a pipeline.yml into steps)
+* [x] Artifact upload, download, exists
+* [x] Metadata set, get, exists
+* [x] Basic plugin support
+
+## What isn't working
+
+* [ ] Input steps
+* [ ] `If` conditionals
+* [ ] Vendored plugins
+* Basically anything Buildkite has done since 2019.
 
 ## Credit
 
