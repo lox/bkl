@@ -34,3 +34,5 @@ hello world!
 ## Credit
 
 Extracted from https://github.com/buildkite/cli.
+
+P.S. @toolmantim, you were right. This always should have been a standalone tool. Soz.
