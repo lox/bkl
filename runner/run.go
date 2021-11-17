@@ -189,6 +189,12 @@ func Run(ctx context.Context, params Params) error {
 				j.Env = append(j.Env, step.Command.Env...)
 				j.Env = append(j.Env, `BUILDKITE_CLI=true`)
 
+				// force parallelism of 1
+				if step.Command.Parallelism > 0 {
+					j.Env = append(j.Env,
+						`BUILDKITE_PARALLEL_JOB=0`, `BUILDKITE_PARALLEL_JOB_COUNT=1`)
+				}
+
 				if err = executeJob(ctx, server, w, j); err != nil {
 					headerColor.Printf(">>> 🚨 Command failed in %v\n", time.Now().Sub(timer))
 					return err

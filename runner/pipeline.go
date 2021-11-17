@@ -203,6 +203,7 @@ type commandStep struct {
 	Plugins       []Plugin `json:"-"`
 	Env           []string `json:"-"`
 	ArtifactPaths []string `json:"-"`
+	Parallelism   int      `json:"parallelism"`
 }
 
 func (s *commandStep) UnmarshalJSON(data []byte) error {
@@ -216,12 +217,14 @@ func (s *commandStep) UnmarshalJSON(data []byte) error {
 		ArtifactPaths stringOrSlice `json:"artifact_paths"`
 		Branch        stringOrSlice `json:"branch"`
 		Branches      stringOrSlice `json:"branches"`
+		Parallelism   int           `json:"parallelism"`
 	}
 
 	if err := json.Unmarshal(data, &intermediate); err != nil {
 		return fmt.Errorf("invalid command step: %v", err)
 	}
 
+	s.Parallelism = intermediate.Parallelism
 	s.ArtifactPaths = []string(intermediate.ArtifactPaths)
 
 	// Normalize name vs label
