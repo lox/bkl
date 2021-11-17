@@ -34,6 +34,16 @@ type Params struct {
 	ListenPort  int
 }
 
+// Run starts an API server and a `buildkite-agent` process that is
+// listening for jobs against that api.
+//
+// An initial command is used to upload some pipeline yaml to the
+// server, which is then broken up into steps and run through foreground
+// processing and filtering based on the runner params.
+//
+// Steps are then added as scheduled Jobs via the API server, where they
+// are processed by the waiting agent process. The API server handles
+// results and state change and finally updates the state of the job.
 func Run(ctx context.Context, params Params) error {
 	agentPool := newAgentPool()
 	server := newApiServer(agentPool, params.ListenPort)
