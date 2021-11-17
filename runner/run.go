@@ -95,7 +95,7 @@ func Run(ctx context.Context, params Params) error {
 	}()
 
 	headerColor := color.New(color.FgWhite, color.Bold)
-	headerColor.Printf(">>> Starting local agent 🤖\n")
+	headerColor.Printf(">>> Starting local agent 🕵️‍♂️\n")
 
 	build := Build{
 		ID:     uuid.NewV4().String(),
@@ -187,6 +187,7 @@ func Run(ctx context.Context, params Params) error {
 				j.Env = []string{}
 				j.Env = append(j.Env, step.Env...)
 				j.Env = append(j.Env, step.Command.Env...)
+				j.Env = append(j.Env, `BUILDKITE_CLI=true`)
 
 				if err = executeJob(ctx, server, w, j); err != nil {
 					headerColor.Printf(">>> 🚨 Command failed in %v\n", time.Now().Sub(timer))
