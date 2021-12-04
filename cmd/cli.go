@@ -26,9 +26,14 @@ type CLI struct {
 	Prompt          bool              `help:"Prompt before running steps"`
 	DryRun          bool              `help:"Dry run, don't actually run"`
 	ListenPort      int               `help:"The port to run on"`
+	BootstrapScript string            `help:"Specify an alternative custom bootstrap command" type:"existingfile"`
 }
 
 func (c *CLI) Run(ctx *kong.Context) error {
+	if c.Debug {
+		runner.Debug = true
+	}
+
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, os.Interrupt)
 
@@ -69,16 +74,17 @@ func (c *CLI) Run(ctx *kong.Context) error {
 	}
 
 	return runner.Run(cancelCtx, runner.Params{
-		Debug:      c.Debug,
-		DebugHTTP:  c.DebugHTTP,
-		Env:        c.Env,
-		Metadata:   c.Metadata,
-		DryRun:     c.DryRun,
-		Command:    command,
-		Dir:        wd,
-		Prompt:     c.Prompt,
-		StepFilter: stepFilterReg,
-		ListenPort: c.ListenPort,
+		Debug:           c.Debug,
+		DebugHTTP:       c.DebugHTTP,
+		Env:             c.Env,
+		Metadata:        c.Metadata,
+		DryRun:          c.DryRun,
+		Command:         command,
+		Dir:             wd,
+		Prompt:          c.Prompt,
+		StepFilter:      stepFilterReg,
+		ListenPort:      c.ListenPort,
+		BootstrapScript: c.BootstrapScript,
 		JobTemplate: runner.Job{
 			Commit:           commit,
 			Branch:           branch,
