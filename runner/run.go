@@ -21,17 +21,18 @@ import (
 )
 
 type Params struct {
-	Debug       bool
-	DebugHTTP   bool
-	Env         []string
-	Metadata    map[string]string
-	Dir         string
-	Command     string
-	Prompt      bool
-	StepFilter  *regexp.Regexp
-	DryRun      bool
-	JobTemplate Job
-	ListenPort  int
+	Debug           bool
+	DebugHTTP       bool
+	Env             []string
+	Metadata        map[string]string
+	Dir             string
+	Command         string
+	Prompt          bool
+	StepFilter      *regexp.Regexp
+	DryRun          bool
+	JobTemplate     Job
+	ListenPort      int
+	BootstrapScript string
 }
 
 // Run starts an API server and a `buildkite-agent` process that is
@@ -82,9 +83,10 @@ func Run(ctx context.Context, params Params) error {
 	debugf("Serving API on %s", endpoint)
 
 	agent := Agent{
-		Dir:      params.Dir,
-		Env:      params.Env,
-		Endpoint: endpoint,
+		Dir:             params.Dir,
+		Env:             params.Env,
+		Endpoint:        endpoint,
+		BootstrapScript: params.BootstrapScript,
 	}
 	if err := agent.Run(ctx); err != nil {
 		return err
@@ -377,9 +379,10 @@ func executeJob(ctx context.Context, server *apiServer, w io.Writer, j Job) erro
 }
 
 type Agent struct {
-	Dir      string
-	Env      []string
-	Endpoint string
+	Dir             string
+	Env             []string
+	Endpoint        string
+	BootstrapScript string
 
 	sync.Mutex
 	stopFunc func() error
@@ -388,7 +391,7 @@ type Agent struct {
 }
 
 func (a *Agent) Run(ctx context.Context) error {
-	bootstrap, err := createAgentBootstrap(a.Dir)
+	bootstrap, err := createAgentBootstrap(a.Dir, a.BootstrapScript)
 	if err != nil {
 		return err
 	}
@@ -491,7 +494,7 @@ func (a *Agent) Stop() error {
 	return err
 }
 
-func createAgentBootstrap(checkoutPath string) (*os.File, error) {
+func createAgentBootstrap(checkoutPath string, bootstrapScript string) (*os.File, error) {
 	tempFileNamePattern := "bootstrap-"
 	if runtime.GOOS == "windows" {
 		tempFileNamePattern = "bootstrap-*.bat"
@@ -501,19 +504,24 @@ func createAgentBootstrap(checkoutPath string) (*os.File, error) {
 		return nil, err
 	}
 
-	debugf("Creating bootrap script at %s", tmpFile.Name())
+	if bootstrapScript == "" {
+		debugf("Creating bootrap script at %s", tmpFile.Name())
+		bootstrapScript = `buildkite-agent bootstrap`
+	} else {
+		debugf("Customizing bootrap script %s at %s", bootstrapScript, tmpFile.Name())
+	}
 
 	var text []byte
 	if runtime.GOOS == "windows" {
 		text = []byte(fmt.Sprintf(`@ECHO OFF
 		SET "BUILDKITE_BUILD_CHECKOUT_PATH=%s"
 		SET "BUILDKITE_BOOTSTRAP_PHASES=plugin,command"
-		buildkite-agent bootstrap`, checkoutPath))
+		%s`, checkoutPath, bootstrapScript))
 	} else {
 		text = []byte(fmt.Sprintf(`#!/bin/sh
 		export BUILDKITE_BUILD_CHECKOUT_PATH=%s
 		export BUILDKITE_BOOTSTRAP_PHASES=plugin,command
-		buildkite-agent bootstrap`, checkoutPath))
+		%s`, checkoutPath, bootstrapScript))
 	}
 
 	if _, err = tmpFile.Write(text); err != nil {
